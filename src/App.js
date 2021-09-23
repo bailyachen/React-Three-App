@@ -1,40 +1,70 @@
 import './App.css';
+import { Canvas, useFrame, useThree, useLoader, extend } from '@react-three/fiber';
+import { useRef, Suspense } from 'react';
 import * as THREE from 'three';
+import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
+extend({ OrbitControls })
+
+const Orbit = () => {
+  const {camera, gl} = useThree();
+  return (
+    <orbitControls args={[camera, gl.domElement]}/>
+  );
+}
+
+const Cube = props => {
+  const ref = useRef();
+  const texture = useLoader(THREE.TextureLoader, '/wood.jpg');
+  useFrame(state => {
+    ref.current.rotation.x += 0.01;
+    ref.current.rotation.y += 0.01;
+  });
+  return (
+    <mesh ref={ref} {...props} castShadow>
+      <boxBufferGeometry/>
+      <meshPhysicalMaterial
+      map={texture}
+      />
+    </mesh>
+  );
+}
+
+const Floor = props => {
+  return (
+    <mesh {...props} receiveShadow>
+      <boxBufferGeometry args={[20, 0.5, 20]}/>
+      <meshPhysicalMaterial/>
+    </mesh>
+  )
+}
+
+const Bulb = props => {
+  return (
+    <mesh {...props} castShadow>
+      <pointLight castShadow/>
+      <sphereBufferGeometry args={[0.2]}/>
+      <meshPhongMaterial emissive='yellow'/>
+    </mesh>
+  )
+}
 
 function App() {
-  const scene = new THREE.Scene();
-  const camera = new THREE.PerspectiveCamera(
-    75,
-    window.innerWidth / window.innerHeight,
-    0.1,
-    1000
-  );
-  const renderer = new THREE.WebGLRenderer();
-  renderer.setSize(
-    window.innerWidth,
-    window.innerHeight
-  );
-  document.body.innerHTML = '';
-  document.body.appendChild(renderer.domElement);
-  const geometry = new THREE.BoxGeometry();
-  const material = new THREE.MeshBasicMaterial({
-    color: 'red'
-  });
-  camera.position.z = 5;
-  const cube = new THREE.Mesh(geometry, material);
-  scene.add(cube);
-
-  function animate() {
-    requestAnimationFrame(animate);
-    cube.rotation.x += 0.01;
-    cube.rotation.y += 0.01;
-    renderer.render(scene, camera);
-  }
-
-  animate();
-
   return (
-    null
+    <div style={{height: '100vh', width: '100vw'}}>
+      <Canvas 
+      style={{background: 'black'}}
+      camera={{position: [3, 3, 3]}}
+      shadows
+      >
+        <Orbit/>
+        <Bulb position={[2, 6, 0]}/>
+        <Suspense fallback={null}>
+          <Cube position={[0, 0, 0]}/>
+        </Suspense>
+        <Floor position={[0, -3, 0]}/>
+        {/*<fog attach='fog' args={['white', 1, 10]}/>*/}
+      </Canvas>
+    </div>
   );
 }
 
